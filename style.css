@@ -9,164 +9,148 @@
 
 body {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  display: flex;
-  flex-direction: column;
-}
-
-/* Navbar */
-nav {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  color: white;
-  height: 60px;
-  font-size: 22px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  letter-spacing: 1px;
-}
-
-/* Main Layout */
-.gameContainer {
-  flex: 1;
+  background: linear-gradient(135deg, #4e73df, #1cc88a);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 30px 20px;
-  gap: 60px;
-  flex-wrap: wrap;
+  overflow: hidden;
 }
 
-/* Game Board */
+/* App Container */
+.app {
+  text-align: center;
+}
+
+/* Header */
+.appHeader h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+}
+
+.subtitle {
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 25px;
+}
+
+/* Game Card */
+.gameCard {
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(15px);
+  padding: 30px;
+  border-radius: 28px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+  animation: fadeIn 0.7s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Grid */
 .container {
   display: grid;
-  grid-template-columns: repeat(3, min(22vw, 120px));
-  grid-template-rows: repeat(3, min(22vw, 120px));
+  grid-template-columns: repeat(3, 100px);
+  gap: 18px;
+  justify-content: center;
+  margin-bottom: 25px;
   position: relative;
-  gap: 12px;
 }
 
 .box {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8px);
-  border-radius: 16px;
-  font-size: clamp(2rem, 5vw, 3rem);
+  height: 100px;
+  width: 100px;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.8);
+  font-size: 42px;
   font-weight: 700;
-  color: white;
+  color: #4e73df;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
 .box:hover {
-  transform: scale(1.07);
-  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-6px);
+  background: white;
 }
 
-/* Remove old borders */
-.br-0, .bl-0, .bt-0, .bb-0 {
-  border: none;
+.box:active {
+  transform: scale(0.92);
 }
 
-/* Game Info Card */
+/* X and O Colors */
+.boxtext {
+  transition: 0.2s ease;
+}
+
+.boxtext:contains("X") {
+  color: #ff4d6d;
+}
+
+.boxtext:contains("O") {
+  color: #3a86ff;
+}
+
+/* Winner */
+.winner {
+  background: #1cc88a !important;
+  color: white !important;
+  box-shadow: 0 0 25px #1cc88a;
+  animation: winnerPulse 0.6s infinite alternate;
+}
+
+@keyframes winnerPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* Info Section */
 .gameInfo {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(15px);
-  padding: 30px;
-  border-radius: 20px;
-  text-align: center;
-  color: white;
-  min-width: 260px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-}
-
-.gameInfo h1 {
-  font-size: 1.8rem;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .info {
-  display: block;
+  color: white;
+  font-weight: 600;
   font-size: 18px;
-  margin-bottom: 15px;
 }
 
-/* Reset Button */
+/* Button */
 #reset {
-  padding: 10px 25px;
+  margin-top: 12px;
+  padding: 10px 30px;
+  border-radius: 50px;
   border: none;
-  border-radius: 30px;
-  background: white;
-  color: #764ba2;
+  background: linear-gradient(135deg, #3a86ff, #4361ee);
+  color: white;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 #reset:hover {
-  transform: translateY(-2px);
-  background: #f3f3f3;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
 }
 
-/* Win line */
+/* Win Line */
 .line {
   position: absolute;
   height: 6px;
   width: 0;
-  background: #ffeb3b;
+  background: #ffce3d;
   border-radius: 10px;
   transform-origin: 0 50%;
   transition: width 0.4s ease-in-out;
 }
 
-/* Winner image animation */
+/* Celebration Image */
 .imgbox img {
   width: 0;
-  transition: width 0.6s ease-in-out;
-  margin-top: 15px;
+  transition: width 0.5s ease;
 }
-
-.winner {
-  background: rgba(255, 255, 255, 0.35) !important;
-  box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffeb3b;
-  animation: glowPulse 1s infinite alternate;
-}
-
-@keyframes glowPulse {
-  from { transform: scale(1); }
-  to { transform: scale(1.08); }
-}
-
-/* ------------------- */
-/* Mobile Optimization */
-/* ------------------- */
-@media (max-width: 768px) {
-
-  .gameContainer {
-    flex-direction: column;
-    gap: 40px;
-  }
-
-  .container {
-    grid-template-columns: repeat(3, 28vw);
-    grid-template-rows: repeat(3, 28vw);
-    gap: 10px;
-  }
-
-  .gameInfo {
-    width: 100%;
-    max-width: 350px;
-  }
-
-  nav {
-    font-size: 18px;
-    justify-content: center;
-  }
-}
-
-
