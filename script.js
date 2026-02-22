@@ -1,11 +1,11 @@
-// ======================
-// SOUND SETUP
-// ======================
+// ============================
+// 🎵 SOUND SETUP
+// ============================
 
-let clickSound = new Audio("click.mp3");
-let winSound = new Audio("win.mp3");
-let drawSound = new Audio("draw.mp3");
-let bgMusic = new Audio("music.mp3");
+const clickSound = new Audio("click.mp3");
+const winSound = new Audio("win.mp3");
+const drawSound = new Audio("draw.mp3");
+const bgMusic = new Audio("music.mp3");
 
 clickSound.volume = 0.4;
 winSound.volume = 0.6;
@@ -13,35 +13,66 @@ drawSound.volume = 0.6;
 bgMusic.volume = 0.2;
 bgMusic.loop = true;
 
-let musicPlaying = false;
+let musicStarted = false;
 
+// Start music on first user interaction (browser safe)
 document.body.addEventListener("click", () => {
-    if (!musicPlaying) {
-        bgMusic.play();
-        musicPlaying = true;
+    if (!musicStarted) {
+        bgMusic.play().catch(() => { });
+        musicStarted = true;
     }
 }, { once: true });
 
-// ======================
-// MULTIPLAYER STATE
-// ======================
+// Music Toggle
+const musicToggle = document.getElementById("musicToggle");
 
+musicToggle.addEventListener("click", () => {
+    if (bgMusic.paused) {
+        bgMusic.play();
+        musicToggle.innerText = "🔊 Music On";
+    } else {
+        bgMusic.pause();
+        musicToggle.innerText = "🔇 Music Off";
+    }
+});
+
+// ============================
+// 🎮 GAME STATE
+// ============================
+
+let gameMode = "offline"; // offline | online
 let currentRoom = null;
-let playerSymbol = null;
-let gameState = ["","","","","","","","",""];
+let playerSymbol = "X";
 let turn = "X";
+let gameState = ["", "", "", "", "", "", "", "", ""];
 let isgameover = false;
 
 const boxes = document.querySelectorAll(".box");
 const info = document.querySelector(".info");
 
-// ======================
-// CREATE ROOM
-// ======================
+// ============================
+// 🎯 MODE SWITCHING
+// ============================
 
-document.getElementById("createRoomBtn").addEventListener("click", () => {
+document.getElementById("offlineModeBtn").onclick = () => {
+    gameMode = "offline";
+    document.getElementById("roomSection").style.display = "none";
+    resetGame();
+};
 
-    const roomCode = Math.random().toString(36).substring(2,8);
+document.getElementById("onlineModeBtn").onclick = () => {
+    gameMode = "online";
+    document.getElementById("roomSection").style.display = "block";
+    resetGame();
+};
+
+// ============================
+// 🌐 ONLINE MODE
+// ============================
+
+document.getElementById("createRoomBtn").onclick = () => {
+
+    const roomCode = Math.random().toString(36).substring(2, 8);
     currentRoom = roomCode;
     playerSymbol = "X";
 
@@ -52,19 +83,16 @@ document.getElementById("createRoomBtn").addEventListener("click", () => {
     });
 
     document.getElementById("roomInfo").innerText =
-        "Room Code: " + roomCode + " (Share this 💕)";
+        "Room Code: " + roomCode;
+
+    document.getElementById("copyCodeBtn").style.display = "inline-block";
 
     listenToRoom(roomCode);
-});
+};
 
-// ======================
-// JOIN ROOM
-// ======================
-
-document.getElementById("joinRoomBtn").addEventListener("click", () => {
+document.getElementById("joinRoomBtn").onclick = () => {
 
     const roomCode = document.getElementById("roomInput").value.trim();
-
     if (!roomCode) return alert("Enter Room Code");
 
     currentRoom = roomCode;
@@ -74,11 +102,12 @@ document.getElementById("joinRoomBtn").addEventListener("click", () => {
         "Joined Room: " + roomCode;
 
     listenToRoom(roomCode);
-});
+};
 
-// ======================
-// LISTEN TO FIREBASE
-// ======================
+document.getElementById("copyCodeBtn").onclick = () => {
+    navigator.clipboard.writeText(currentRoom);
+    alert("Room code copied 💕");
+};
 
 function listenToRoom(roomCode) {
 
@@ -89,80 +118,145 @@ function listenToRoom(roomCode) {
 
         gameState = data.board;
         turn = data.turn;
-
         updateBoard();
 
         if (data.winner) {
             isgameover = true;
             showWinner(data.winner);
         } else {
-            info.innerText = "Turn: " + turn;
+
+            if (gameMode === "online") {
+
+                if (turn === playerSymbol) {
+                    info.innerHTML = "🟢 Your Turn (" + playerSymbol + ")";
+                } else {
+                    info.innerHTML = "⏳ Waiting for Opponent...";
+                }
+
+            } else {
+                info.innerText = "Turn: " + turn;
+            }
         }
-
     });
 }
 
-// ======================
-// UPDATE BOARD UI
-// ======================
-
-function updateBoard() {
-    boxes.forEach((box, index) => {
-        box.querySelector(".boxtext").innerText = gameState[index];
-    });
-}
-
-// ======================
-// HANDLE BOX CLICK
-// ======================
+// ============================
+// 🎮 BOX CLICK
+// ============================
 
 boxes.forEach((box, index) => {
 
-    box.addEventListener("click", () => {
+    box.onclick = () => {
 
+        if (gameState[index] !== "" || isgameover) return;
+
+        if (gameMode === "offline") {
+            handleOfflineMove(index);
+            return;
+        }
+
+        // Online mode
         if (!currentRoom) {
             alert("Create or Join a Room First 💕");
             return;
         }
 
-        if (gameState[index] !== "" || isgameover) return;
-
         if (turn !== playerSymbol) return;
 
-        gameState[index] = playerSymbol;
-        clickSound.play();
-
-        const winner = checkWinLocal();
-
-        update(ref(db, "rooms/" + currentRoom), {
-            board: gameState,
-            turn: playerSymbol === "X" ? "O" : "X",
-            winner: winner ? playerSymbol : ""
-        });
-
-    });
-
+        makeMove(index);
+    };
 });
 
-// ======================
-// LOCAL WIN CHECK
-// ======================
+// ============================
+// 📴 OFFLINE MOVE
+// ============================
 
-function checkWinLocal() {
+function handleOfflineMove(index) {
+    makeMove(index);
+}
+
+// ============================
+// 🔄 COMMON MOVE LOGIC
+// ============================
+
+function makeMove(index) {
+
+    gameState[index] = turn;
+    clickSound.play();
+    updateBoard();
+
+    const result = checkWin();
+
+    if (result === "win") {
+        isgameover = true;
+
+        if (gameMode === "online") {
+            update(ref(db, "rooms/" + currentRoom), {
+                board: gameState,
+                turn: turn,
+                winner: turn
+            });
+        } else {
+            showWinner(turn);
+        }
+
+        return;
+    }
+
+    if (result === "draw") {
+        isgameover = true;
+
+        if (gameMode === "online") {
+            update(ref(db, "rooms/" + currentRoom), {
+                board: gameState,
+                winner: "draw"
+            });
+        } else {
+            showWinner("draw");
+        }
+
+        return;
+    }
+
+    turn = turn === "X" ? "O" : "X";
+
+    if (gameMode === "online") {
+        update(ref(db, "rooms/" + currentRoom), {
+            board: gameState,
+            turn: turn
+        });
+    }
+
+    if (gameMode === "online") {
+        if (turn === playerSymbol) {
+            info.innerHTML = "🟢 Your Turn (" + playerSymbol + ")";
+        } else {
+            info.innerHTML = "⏳ Waiting for Opponent...";
+        }
+    } else {
+        info.innerText = "Turn: " + turn;
+    }
+}
+
+// ============================
+// 🏆 WIN / DRAW CHECK
+// ============================
+
+function checkWin() {
 
     const wins = [
-        [0,1,2],[3,4,5],[6,7,8],
-        [0,3,6],[1,4,7],[2,5,8],
-        [0,4,8],[2,4,6]
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
     ];
 
-    for (let [a,b,c] of wins) {
+    for (let [a, b, c] of wins) {
         if (
             gameState[a] &&
             gameState[a] === gameState[b] &&
             gameState[a] === gameState[c]
         ) {
-            return true;
+            return "win";
         }
     }
 
@@ -170,73 +264,74 @@ function checkWinLocal() {
         return "draw";
     }
 
-    return false;
+    return null;
 }
 
-// ======================
-// SHOW WINNER
-// ======================
+// ============================
+// 🎨 UPDATE UI
+// ============================
 
-function showWinner(winner) {
+function updateBoard() {
 
-    if (winner === "draw") {
+    boxes.forEach((box, index) => {
+
+        const text = box.querySelector(".boxtext");
+        text.innerText = gameState[index];
+
+        if (gameState[index] === "X") {
+            text.style.color = "#ff4d6d";
+        } else if (gameState[index] === "O") {
+            text.style.color = "#3a86ff";
+        } else {
+            text.style.color = "#333";
+        }
+    });
+}
+
+// ============================
+// 🎉 SHOW WINNER
+// ============================
+
+function showWinner(result) {
+
+    if (result === "draw") {
         drawSound.play();
-        document.getElementById("winnerName").innerText = "It's a Draw 😅";
+        document.getElementById("winnerName").innerText =
+            "It's a Draw 😅";
     } else {
         winSound.play();
-        document.getElementById("winnerName").innerText = winner + " Wins 🎉";
+        document.getElementById("winnerName").innerText =
+            result + " Wins 🎉";
     }
 
-    confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 }
-    });
-
-    document.getElementById("winDropdown").classList.add("active");
+    document.getElementById("winDropdown")
+        .classList.add("active");
 }
 
-// ======================
-// RESET GAME
-// ======================
+// ============================
+// 🔄 RESET
+// ============================
 
-document.getElementById("reset")
-.addEventListener("click", resetGame);
-
-document.getElementById("playAgainBtn")
-.addEventListener("click", resetGame);
+document.getElementById("reset").onclick = resetGame;
+document.getElementById("playAgainBtn").onclick = resetGame;
 
 function resetGame() {
 
-    if (!currentRoom) return;
-
-    gameState = ["","","","","","","","",""];
-    isgameover = false;
+    gameState = ["", "", "", "", "", "", "", "", ""];
     turn = "X";
+    isgameover = false;
 
-    update(ref(db, "rooms/" + currentRoom), {
-        board: gameState,
-        turn: "X",
-        winner: ""
-    });
+    updateBoard();
+    info.innerText = "Turn: X";
 
-    document.getElementById("winDropdown").classList.remove("active");
-}
+    document.getElementById("winDropdown")
+        .classList.remove("active");
 
-// ======================
-// MUSIC TOGGLE
-// ======================
-
-const musicToggle = document.getElementById("musicToggle");
-
-musicToggle.addEventListener("click", () => {
-
-    if (bgMusic.paused) {
-        bgMusic.play();
-        musicToggle.innerText = "🔊 Music On";
-    } else {
-        bgMusic.pause();
-        musicToggle.innerText = "🔇 Music Off";
+    if (gameMode === "online" && currentRoom) {
+        update(ref(db, "rooms/" + currentRoom), {
+            board: gameState,
+            turn: "X",
+            winner: ""
+        });
     }
-
-});
+}

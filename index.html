@@ -19,14 +19,21 @@
       <p class="subtitle">Play & Enjoy</p>
     </header>
 
-    <div class="roomSection">
-      <button id="createRoomBtn">Create Room</button>
+    <div class="modeSection">
+        <button id="offlineModeBtn">🎮 Offline Play</button>
+        <button id="onlineModeBtn">🌐 Online Play</button>
+      </div>
 
-      <input id="roomInput" placeholder="Enter Room Code" />
-      <button id="joinRoomBtn">Join Room</button>
+      <div class="roomSection" id="roomSection" style="display:none;">
+        <button id="createRoomBtn">Create Room</button>
 
-      <p id="roomInfo"></p>
-    </div>
+        <input id="roomInput" placeholder="Enter Room Code" />
+        <button id="joinRoomBtn">Join Room</button>
+
+        <button id="copyCodeBtn" style="display:none;">📋 Copy Code</button>
+
+        <p id="roomInfo"></p>
+      </div>
 
     <div class="gameCard">
       <div class="container">
