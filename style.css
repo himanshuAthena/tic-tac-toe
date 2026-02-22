@@ -1,119 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhaina+2&family=Roboto&display=swap');
-*{
-    margin: 0;
-    padding: 0;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
 }
 
-nav{
-    background-color: rgb(37, 9, 37);
-    color: white;
-    height: 65px;
-    font-size: 27px;
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    font-family: 'Roboto', sans-serif;
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: flex;
+  flex-direction: column;
 }
 
-nav ul{
-    list-style-type: none;
+/* Navbar */
+nav {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  color: white;
+  height: 60px;
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  letter-spacing: 1px;
 }
 
-.gameContainer{ 
-    display: flex;
-    justify-content: center;
-    margin-top: 50px;
+/* Main Layout */
+.gameContainer {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 20px;
+  gap: 60px;
+  flex-wrap: wrap;
 }
 
-.container{
-    display: grid;
-    grid-template-rows: repeat(3, 10vw);
-    grid-template-columns: repeat(3, 10vw);
-    font-family: 'Roboto', sans-serif;
-    position: relative;
+/* Game Board */
+.container {
+  display: grid;
+  grid-template-columns: repeat(3, min(22vw, 120px));
+  grid-template-rows: repeat(3, min(22vw, 120px));
+  position: relative;
+  gap: 12px;
 }
 
-.box{
-    border: 2px solid black;
-    font-size: 8vw;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.box {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-.box:hover{
-    background-color: rgb(242, 234, 250);
+.box:hover {
+  transform: scale(1.07);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Remove old borders */
+.br-0, .bl-0, .bt-0, .bb-0 {
+  border: none;
+}
+
+/* Game Info Card */
+.gameInfo {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  color: white;
+  min-width: 260px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+.gameInfo h1 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
 }
 
 .info {
-    font-size: 22px;
+  display: block;
+  font-size: 18px;
+  margin-bottom: 15px;
 }
 
-.gameInfo{
-    padding: 0 34px;
-    font-family: 'Baloo Bhaina 2', cursive;
-}
-
-.gameInfo h1{
-    font-size: 2.5rem;
-}
-
-.imgbox img{
-    width: 0;
-    transition: width 1s ease-in-out;
-}
-
-.br-0{
-    border-right: 0;
-}
-
-.bl-0{
-    border-left: 0;
-}
-
-.bt-0{
-    border-top: 0;
-}
-
-.bb-0{
-    border-bottom: 0;
-}
-
+/* Reset Button */
 #reset {
-    margin: 0 23px;
-    padding: 1px 18px;
-    background: #f3e7f9;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'Baloo Bhaina 2';
-    font-size: 15px;
-    font-weight: bolder;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 30px;
+  background: white;
+  color: #764ba2;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
 }
 
-.line{
-    background-color: black;
-    height: 3px;
-    width: 0;
-    position: absolute;
-    background-color: #911d91;
-    transition: width 1s ease-in-out;
+#reset:hover {
+  transform: translateY(-2px);
+  background: #f3f3f3;
 }
 
-@media screen and (max-width: 950px)
-{
-    .gameContainer{
-        flex-wrap: wrap;
-    }
-    .gameInfo{
-        margin-top: 34px;
-    }
-    .gameInfo h1{
-        font-size: 1.5rem;
-    }
-    .container { 
-        grid-template-rows: repeat(3, 20vw);
-        grid-template-columns: repeat(3, 20vw);
-    }
+/* Win line */
+.line {
+  position: absolute;
+  height: 6px;
+  width: 0;
+  background: #ffeb3b;
+  border-radius: 10px;
+  transform-origin: 0 50%;
+  transition: width 0.4s ease-in-out;
+}
+
+/* Winner image animation */
+.imgbox img {
+  width: 0;
+  transition: width 0.6s ease-in-out;
+  margin-top: 15px;
+}
+
+.winner {
+  background: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffeb3b;
+  animation: glowPulse 1s infinite alternate;
+}
+
+@keyframes glowPulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* ------------------- */
+/* Mobile Optimization */
+/* ------------------- */
+@media (max-width: 768px) {
+
+  .gameContainer {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .container {
+    grid-template-columns: repeat(3, 28vw);
+    grid-template-rows: repeat(3, 28vw);
+    gap: 10px;
+  }
+
+  .gameInfo {
+    width: 100%;
+    max-width: 350px;
+  }
+
+  nav {
+    font-size: 18px;
+    justify-content: center;
+  }
 }
