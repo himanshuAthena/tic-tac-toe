@@ -1,22 +1,49 @@
+// ======================
+// SOUND SETUP
+// ======================
+
 let clickSound = new Audio("click.mp3");
 let winSound = new Audio("win.mp3");
 let drawSound = new Audio("draw.mp3");
 let bgMusic = new Audio("music.mp3");
 
-bgMusic.loop = true;
+clickSound.volume = 0.4;
+winSound.volume = 0.6;
+drawSound.volume = 0.6;
 bgMusic.volume = 0.2;
-bgMusic.play();
+bgMusic.loop = true;
+
+let musicPlaying = false;
+
+// Start music only after first interaction (browser safe)
+document.body.addEventListener("click", () => {
+    if (!musicPlaying) {
+        bgMusic.play();
+        musicPlaying = true;
+    }
+}, { once: true });
+
+// ======================
+// GAME STATE
+// ======================
 
 let turn = "X";
 let isgameover = false;
 
+// ======================
+// CHANGE TURN
+// ======================
+
 const changeTurn = () => turn === "X" ? "O" : "X";
+
+// ======================
+// CHECK WIN
+// ======================
 
 const checkWin = () => {
 
     let boxtexts = document.getElementsByClassName('boxtext');
     let boxes = document.getElementsByClassName('box');
-    let line = document.querySelector(".line");
 
     let wins = [
         [0,1,2],
@@ -29,61 +56,85 @@ const checkWin = () => {
         [2,4,6],
     ];
 
-    wins.forEach(e => {
+    for (let pattern of wins) {
+
+        let [a, b, c] = pattern;
+
         if (
-            boxtexts[e[0]].innerText !== "" &&
-            boxtexts[e[0]].innerText === boxtexts[e[1]].innerText &&
-            boxtexts[e[1]].innerText === boxtexts[e[2]].innerText
+            boxtexts[a].innerText !== "" &&
+            boxtexts[a].innerText === boxtexts[b].innerText &&
+            boxtexts[a].innerText === boxtexts[c].innerText
         ) {
 
             isgameover = true;
-            document.querySelector('.info').innerText =
-                boxtexts[e[0]].innerText + " Wins 🎉";
 
+            let winner = boxtexts[a].innerText;
+
+            // Update small info text
+            document.querySelector('.info').innerText =
+                winner + " Wins 🎉";
+
+            // Play sound
             winSound.play();
 
-            boxes[e[0]].classList.add("winner");
-            boxes[e[1]].classList.add("winner");
-            boxes[e[2]].classList.add("winner");
+            // Highlight winning boxes
+            boxes[a].classList.add("winner");
+            boxes[b].classList.add("winner");
+            boxes[c].classList.add("winner");
 
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            // Confetti
+            if (typeof confetti === "function") {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
 
-            document.querySelector('.imgbox img').style.width = "200px";
+            // Show dropdown panel
+            document.getElementById("winnerName").innerText =
+                winner + " Wins 🎉";
+
+            document.getElementById("winDropdown")
+                .classList.add("active");
+
+            return;
         }
-    });
+    }
+
+    // ======================
+    // CHECK DRAW
+    // ======================
+
+    let filled = 0;
+    for (let box of boxtexts) {
+        if (box.innerText !== "") filled++;
+    }
+
+    if (filled === 9 && !isgameover) {
+        isgameover = true;
+
+        drawSound.play();
+
+        document.querySelector('.info').innerText =
+            "It's a Draw 😅";
+
+        document.getElementById("winnerName").innerText =
+            "It's a Draw 😅";
+
+        document.getElementById("winDropdown")
+            .classList.add("active");
+    }
 };
-let musicPlaying = false;
 
-// Start music on first user interaction (browser policy safe)
-document.body.addEventListener("click", () => {
-    if (!musicPlaying) {
-        bgMusic.play();
-        musicPlaying = true;
-    }
-}, { once: true });
-
-// Toggle Button
-const musicToggle = document.getElementById("musicToggle");
-
-musicToggle.addEventListener("click", () => {
-
-    if (bgMusic.paused) {
-        bgMusic.play();
-        musicToggle.innerText = "🔊 Music On";
-    } else {
-        bgMusic.pause();
-        musicToggle.innerText = "🔇 Music Off";
-    }
-
-});
+// ======================
+// BOX CLICK LOGIC
+// ======================
 
 let boxes = document.getElementsByClassName("box");
 
 Array.from(boxes).forEach(element => {
+
     let boxtext = element.querySelector('.boxtext');
 
     element.addEventListener('click', () => {
@@ -104,7 +155,17 @@ Array.from(boxes).forEach(element => {
     });
 });
 
-document.getElementById("reset").addEventListener('click', () => {
+// ======================
+// RESET BUTTON
+// ======================
+
+document.getElementById("reset")
+.addEventListener('click', resetGame);
+
+document.getElementById("playAgainBtn")
+.addEventListener("click", resetGame);
+
+function resetGame() {
 
     let boxtexts = document.querySelectorAll('.boxtext');
     let boxes = document.querySelectorAll('.box');
@@ -112,11 +173,32 @@ document.getElementById("reset").addEventListener('click', () => {
     boxtexts.forEach(e => e.innerText = "");
     boxes.forEach(b => b.classList.remove("winner"));
 
-    document.querySelector('.imgbox img').style.width = "0";
-    document.querySelector(".line").style.width = "0";
-
     turn = "X";
     isgameover = false;
 
-    document.querySelector(".info").innerText = "Turn for " + turn;
+    document.querySelector(".info").innerText =
+        "Turn for " + turn;
+
+    document.getElementById("winDropdown")
+        .classList.remove("active");
+
+    document.getElementById("winGifImg").src = "excited.gif";
+}
+
+// ======================
+// MUSIC TOGGLE
+// ======================
+
+const musicToggle = document.getElementById("musicToggle");
+
+musicToggle.addEventListener("click", () => {
+
+    if (bgMusic.paused) {
+        bgMusic.play();
+        musicToggle.innerText = "🔊 Music On";
+    } else {
+        bgMusic.pause();
+        musicToggle.innerText = "🔇 Music Off";
+    }
+
 });
