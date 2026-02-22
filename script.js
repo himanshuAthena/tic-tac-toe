@@ -15,7 +15,6 @@ bgMusic.loop = true;
 
 let musicPlaying = false;
 
-// Start music only after first interaction (browser safe)
 document.body.addEventListener("click", () => {
     if (!musicPlaying) {
         bgMusic.play();
@@ -24,165 +23,204 @@ document.body.addEventListener("click", () => {
 }, { once: true });
 
 // ======================
-// GAME STATE
+// MULTIPLAYER STATE
 // ======================
 
+let currentRoom = null;
+let playerSymbol = null;
+let gameState = ["","","","","","","","",""];
 let turn = "X";
 let isgameover = false;
 
-// ======================
-// CHANGE TURN
-// ======================
-
-const changeTurn = () => turn === "X" ? "O" : "X";
+const boxes = document.querySelectorAll(".box");
+const info = document.querySelector(".info");
 
 // ======================
-// CHECK WIN
+// CREATE ROOM
 // ======================
 
-const checkWin = () => {
+document.getElementById("createRoomBtn").addEventListener("click", () => {
 
-    let boxtexts = document.getElementsByClassName('boxtext');
-    let boxes = document.getElementsByClassName('box');
+    const roomCode = Math.random().toString(36).substring(2,8);
+    currentRoom = roomCode;
+    playerSymbol = "X";
 
-    let wins = [
-        [0,1,2],
-        [3,4,5],
-        [6,7,8],
-        [0,3,6],
-        [1,4,7],
-        [2,5,8],
-        [0,4,8],
-        [2,4,6],
-    ];
-
-    for (let pattern of wins) {
-
-        let [a, b, c] = pattern;
-
-        if (
-            boxtexts[a].innerText !== "" &&
-            boxtexts[a].innerText === boxtexts[b].innerText &&
-            boxtexts[a].innerText === boxtexts[c].innerText
-        ) {
-
-            isgameover = true;
-
-            let winner = boxtexts[a].innerText;
-
-            // Update small info text
-            document.querySelector('.info').innerText =
-                winner + " Wins 🎉";
-
-            // Play sound
-            winSound.play();
-
-            // Highlight winning boxes
-            boxes[a].classList.add("winner");
-            boxes[b].classList.add("winner");
-            boxes[c].classList.add("winner");
-
-            // Confetti
-            if (typeof confetti === "function") {
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
-            }
-
-            // Show dropdown panel
-            document.getElementById("winnerName").innerText =
-                winner + " Wins 🎉";
-
-            document.getElementById("winDropdown")
-                .classList.add("active");
-
-            return;
-        }
-    }
-
-    // ======================
-    // CHECK DRAW
-    // ======================
-
-    let filled = 0;
-    for (let box of boxtexts) {
-        if (box.innerText !== "") filled++;
-    }
-
-    if (filled === 9 && !isgameover) {
-        isgameover = true;
-
-        drawSound.play();
-
-        document.querySelector('.info').innerText =
-            "It's a Draw 😅";
-
-        document.getElementById("winnerName").innerText =
-            "It's a Draw 😅";
-
-        document.getElementById("winDropdown")
-            .classList.add("active");
-    }
-};
-
-// ======================
-// BOX CLICK LOGIC
-// ======================
-
-let boxes = document.getElementsByClassName("box");
-
-Array.from(boxes).forEach(element => {
-
-    let boxtext = element.querySelector('.boxtext');
-
-    element.addEventListener('click', () => {
-
-        if (boxtext.innerText === '' && !isgameover) {
-
-            boxtext.innerText = turn;
-            clickSound.play();
-
-            checkWin();
-
-            if (!isgameover) {
-                turn = changeTurn();
-                document.querySelector(".info").innerText =
-                    "Turn for " + turn;
-            }
-        }
+    set(ref(db, "rooms/" + roomCode), {
+        board: gameState,
+        turn: "X",
+        winner: ""
     });
+
+    document.getElementById("roomInfo").innerText =
+        "Room Code: " + roomCode + " (Share this 💕)";
+
+    listenToRoom(roomCode);
 });
 
 // ======================
-// RESET BUTTON
+// JOIN ROOM
+// ======================
+
+document.getElementById("joinRoomBtn").addEventListener("click", () => {
+
+    const roomCode = document.getElementById("roomInput").value.trim();
+
+    if (!roomCode) return alert("Enter Room Code");
+
+    currentRoom = roomCode;
+    playerSymbol = "O";
+
+    document.getElementById("roomInfo").innerText =
+        "Joined Room: " + roomCode;
+
+    listenToRoom(roomCode);
+});
+
+// ======================
+// LISTEN TO FIREBASE
+// ======================
+
+function listenToRoom(roomCode) {
+
+    onValue(ref(db, "rooms/" + roomCode), (snapshot) => {
+
+        const data = snapshot.val();
+        if (!data) return;
+
+        gameState = data.board;
+        turn = data.turn;
+
+        updateBoard();
+
+        if (data.winner) {
+            isgameover = true;
+            showWinner(data.winner);
+        } else {
+            info.innerText = "Turn: " + turn;
+        }
+
+    });
+}
+
+// ======================
+// UPDATE BOARD UI
+// ======================
+
+function updateBoard() {
+    boxes.forEach((box, index) => {
+        box.querySelector(".boxtext").innerText = gameState[index];
+    });
+}
+
+// ======================
+// HANDLE BOX CLICK
+// ======================
+
+boxes.forEach((box, index) => {
+
+    box.addEventListener("click", () => {
+
+        if (!currentRoom) {
+            alert("Create or Join a Room First 💕");
+            return;
+        }
+
+        if (gameState[index] !== "" || isgameover) return;
+
+        if (turn !== playerSymbol) return;
+
+        gameState[index] = playerSymbol;
+        clickSound.play();
+
+        const winner = checkWinLocal();
+
+        update(ref(db, "rooms/" + currentRoom), {
+            board: gameState,
+            turn: playerSymbol === "X" ? "O" : "X",
+            winner: winner ? playerSymbol : ""
+        });
+
+    });
+
+});
+
+// ======================
+// LOCAL WIN CHECK
+// ======================
+
+function checkWinLocal() {
+
+    const wins = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+    ];
+
+    for (let [a,b,c] of wins) {
+        if (
+            gameState[a] &&
+            gameState[a] === gameState[b] &&
+            gameState[a] === gameState[c]
+        ) {
+            return true;
+        }
+    }
+
+    if (!gameState.includes("")) {
+        return "draw";
+    }
+
+    return false;
+}
+
+// ======================
+// SHOW WINNER
+// ======================
+
+function showWinner(winner) {
+
+    if (winner === "draw") {
+        drawSound.play();
+        document.getElementById("winnerName").innerText = "It's a Draw 😅";
+    } else {
+        winSound.play();
+        document.getElementById("winnerName").innerText = winner + " Wins 🎉";
+    }
+
+    confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 }
+    });
+
+    document.getElementById("winDropdown").classList.add("active");
+}
+
+// ======================
+// RESET GAME
 // ======================
 
 document.getElementById("reset")
-.addEventListener('click', resetGame);
+.addEventListener("click", resetGame);
 
 document.getElementById("playAgainBtn")
 .addEventListener("click", resetGame);
 
 function resetGame() {
 
-    let boxtexts = document.querySelectorAll('.boxtext');
-    let boxes = document.querySelectorAll('.box');
+    if (!currentRoom) return;
 
-    boxtexts.forEach(e => e.innerText = "");
-    boxes.forEach(b => b.classList.remove("winner"));
-
-    turn = "X";
+    gameState = ["","","","","","","","",""];
     isgameover = false;
+    turn = "X";
 
-    document.querySelector(".info").innerText =
-        "Turn for " + turn;
+    update(ref(db, "rooms/" + currentRoom), {
+        board: gameState,
+        turn: "X",
+        winner: ""
+    });
 
-    document.getElementById("winDropdown")
-        .classList.remove("active");
-
-    document.getElementById("winGifImg").src = "excited.gif";
+    document.getElementById("winDropdown").classList.remove("active");
 }
 
 // ======================

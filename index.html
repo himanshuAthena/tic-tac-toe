@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tic Tac Toe</title>
 
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 
   <!-- Confetti -->
@@ -15,65 +14,85 @@
 <body>
 
   <div class="app">
-
-    <!-- Header -->
     <header class="appHeader">
       <h2>🎮 Tic Tac Toe</h2>
       <p class="subtitle">Play & Enjoy</p>
     </header>
 
-    <!-- Game Card -->
-    <div class="gameCard">
+    <div class="roomSection">
+      <button id="createRoomBtn">Create Room</button>
 
-      <!-- Game Board -->
+      <input id="roomInput" placeholder="Enter Room Code" />
+      <button id="joinRoomBtn">Join Room</button>
+
+      <p id="roomInfo"></p>
+    </div>
+
+    <div class="gameCard">
       <div class="container">
         <div class="line"></div>
-
         <div class="box"><span class="boxtext"></span></div>
         <div class="box"><span class="boxtext"></span></div>
         <div class="box"><span class="boxtext"></span></div>
-
         <div class="box"><span class="boxtext"></span></div>
         <div class="box"><span class="boxtext"></span></div>
         <div class="box"><span class="boxtext"></span></div>
-
         <div class="box"><span class="boxtext"></span></div>
         <div class="box"><span class="boxtext"></span></div>
         <div class="box"><span class="boxtext"></span></div>
       </div>
 
-      <!-- Info Section -->
       <div class="gameInfo">
         <span class="info">Turn for X</span>
         <button id="reset">Reset Game</button>
         <button id="musicToggle">🔊 Music On</button>
       </div>
 
-      <!-- Celebration Image -->
       <div class="imgbox">
         <img src="excited.gif" alt="Celebration" />
       </div>
-
     </div>
-
   </div>
 
-  <!-- WINNING DROPDOWN PANEL -->
+  <!-- WIN MODAL -->
   <div id="winDropdown" class="winDropdown">
     <div class="winBox">
       <h1 id="winnerName">🎉 X Wins!</h1>
       <p>That was an amazing move 👏</p>
-
-      <!-- GIF INSIDE MODAL -->
       <div class="winGif">
-        <img id="winGifImg" src="excited.gif" alt="Celebration" />
+        <img id="winGifImg" src="excited.gif" />
       </div>
-
       <button id="playAgainBtn">Play Again</button>
     </div>
   </div>
 
-  <!-- Script -->
+  <!-- Firebase Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "tic-tac-love-6f2da.firebaseapp.com",
+      databaseURL: "https://tic-tac-love-6f2da-default-rtdb.firebaseio.com/",
+      projectId: "tic-tac-love-6f2da",
+      storageBucket: "tic-tac-love-6f2da.firebasestorage.app",
+      messagingSenderId: "648250215400",
+      appId: "1:648250215400:web:052741140fdb5dcc92b25d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    window.db = db;
+    window.ref = ref;
+    window.set = set;
+    window.onValue = onValue;
+    window.update = update;
+  </script>
+
+  <!-- Your Game Script -->
   <script src="script.js"></script>
 
 </body>
