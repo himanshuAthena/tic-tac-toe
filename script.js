@@ -56,6 +56,30 @@ const checkWin = () => {
         }
     });
 };
+let musicPlaying = false;
+
+// Start music on first user interaction (browser policy safe)
+document.body.addEventListener("click", () => {
+    if (!musicPlaying) {
+        bgMusic.play();
+        musicPlaying = true;
+    }
+}, { once: true });
+
+// Toggle Button
+const musicToggle = document.getElementById("musicToggle");
+
+musicToggle.addEventListener("click", () => {
+
+    if (bgMusic.paused) {
+        bgMusic.play();
+        musicToggle.innerText = "🔊 Music On";
+    } else {
+        bgMusic.pause();
+        musicToggle.innerText = "🔇 Music Off";
+    }
+
+});
 
 let boxes = document.getElementsByClassName("box");
 
